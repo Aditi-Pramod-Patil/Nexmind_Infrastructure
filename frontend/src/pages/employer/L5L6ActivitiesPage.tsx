@@ -144,7 +144,7 @@ export function L5L6ActivitiesPage() {
         title="L5/L6 Activity Explorer"
         subtitle="Hierarchical schedule tree mapping L5 Work Packages down to L6 Field Activities."
         action={
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
             {projects.length > 0 && (
               <Select
                 value={selectedProjectId}
@@ -159,17 +159,21 @@ export function L5L6ActivitiesPage() {
 
             <Button
               variant="secondary"
+              size="md"
               onClick={() => navigate(`/employer/projects/${selectedProjectId}/plan`)}
               disabled={!selectedProjectId}
+              className="px-3.5 py-2 shadow-2xs"
             >
               Execution Plan Review
             </Button>
 
             <Button
               variant="primary"
+              size="md"
               icon={Upload}
               onClick={() => setShowUploadModal(true)}
               disabled={!selectedProjectId}
+              className="px-4 py-2 shadow-xs"
             >
               Upload Schedule Data
             </Button>
