@@ -6,6 +6,7 @@ export interface FormattedTaskInfo {
   displayTitle: string;
   stageBadge?: string;
   scopeItems: string[];
+  subtasks: string[];
   fullSummary?: string;
 }
 
@@ -118,12 +119,137 @@ export function formatTaskForDisplay(task: {
     }
   }
 
+  // 4. Generate sequential subtasks for the daily task
+  const subtasks = extractSequentialSubtasks({
+    task_name: rawTaskName,
+    l6_name: rawL6,
+    stageBadge,
+    scopeItems
+  });
+
   return {
     cleanPackageName,
     subPackageName,
     displayTitle,
     stageBadge,
     scopeItems,
+    subtasks,
     fullSummary: rawTaskName !== displayTitle && scopeItems.length === 0 ? rawTaskName : undefined,
   };
+}
+
+export function extractSequentialSubtasks(task: {
+  l5_name?: string;
+  l6_name?: string;
+  task_name?: string;
+  stageBadge?: string;
+  scopeItems?: string[];
+}): string[] {
+  // If explicit comma-separated scope items exist, use them sequentially
+  if (task.scopeItems && task.scopeItems.length >= 2) {
+    return task.scopeItems;
+  }
+
+  const raw = `${task.task_name || ''} ${task.l6_name || ''} ${task.stageBadge || ''}`.toLowerCase();
+
+  // Domain-specific step breakdown
+  if (raw.includes('verification') || raw.includes('safety inspection') || raw.includes('inspection')) {
+    return [
+      'Site safety briefing & PPE compliance verification',
+      'Structural alignment & physical tolerance check',
+      'Conduit, fittings & MEP interface inspection',
+      'Daily site execution log & supervisor sign-off'
+    ];
+  }
+
+  if (raw.includes('boring') || raw.includes('pile') || raw.includes('drilling')) {
+    return [
+      'Position hydraulic piling rig & verify center alignment',
+      'Soil boring & excavation to target design depth',
+      'Bentonite slurry circulation & borehole cleaning',
+      'Depth caliper check & reinforcement cage placement'
+    ];
+  }
+
+  if (raw.includes('rebar') || raw.includes('reinforcement') || raw.includes('binding')) {
+    return [
+      'Cut, bend and transport rebar bundles to work zone',
+      'Grid layout marking & primary rebar positioning',
+      'Tie-wire binding of vertical bars & horizontal stirrups',
+      'Concrete spacer block fixing & cover clearance check'
+    ];
+  }
+
+  if (raw.includes('shuttering') || raw.includes('formwork')) {
+    return [
+      'Clean shuttering panels & apply formwork release agent',
+      'Erect formwork panels & secure external tie-rods',
+      'Laser plumb-line alignment & lateral prop bracing',
+      'Joint sealing check to prevent cement slurry leakage'
+    ];
+  }
+
+  if (raw.includes('concrete') || raw.includes('pour') || raw.includes('casting')) {
+    return [
+      'Pre-pour checklist: Rebar, formwork & cleanliness sign-off',
+      'Concrete batch transit mixer inspection & slump test',
+      'Controlled concrete pour with continuous needle vibration',
+      'Top surface screeding, leveling & initial wet curing setup'
+    ];
+  }
+
+  if (raw.includes('pipe') || raw.includes('spool') || raw.includes('header')) {
+    return [
+      'Rigging and crane hoisting of spool pipe segments',
+      'Flange alignment, bevel cleaning & tack welding',
+      'Full root & cap pass welding of pipe joint',
+      'Non-destructive testing (NDT) & joint inspection'
+    ];
+  }
+
+  if (raw.includes('cable') || raw.includes('electrical') || raw.includes('wiring')) {
+    return [
+      'Perforated cable tray & conduit bracket installation',
+      'Cable drum positioning, pulling & trunking containment',
+      'Core identification, stripping & gland termination',
+      'Insulation resistance megger test & circuit tagging'
+    ];
+  }
+
+  if (raw.includes('hvac') || raw.includes('duct') || raw.includes('ventilation')) {
+    return [
+      'Duct hanger anchor drilling & threaded rod hanging',
+      'Sheet metal duct section lifting & gasket joint sealing',
+      'Damper & diffuser installation with acoustic insulation',
+      'Airflow static pressure testing & smoke damper check'
+    ];
+  }
+
+  if (raw.includes('excavat') || raw.includes('earthwork') || raw.includes('clearing')) {
+    return [
+      'Survey boundary pegging & underground utility marking',
+      'JCB/Excavator bulk trench digging & topsoil stripping',
+      'Grade leveling & laser level bed depth checking',
+      'Vibratory roller soil compaction & moisture density test'
+    ];
+  }
+
+  if (raw.includes('server') || raw.includes('rack') || raw.includes('floor')) {
+    return [
+      'Laser leveling of floor pedestal grid & stringers',
+      'Anti-static floor panel laying & cable grommet cutouts',
+      'Server rack positioning, bolting & seismic anchoring',
+      'Earth bonding & protective grounding verification'
+    ];
+  }
+
+  // Fallback for general execution tasks
+  const title = task.stageBadge || task.task_name || 'Scheduled Activity';
+  const cleanAction = toTitleCase(title.split('—')[0].trim());
+  return [
+    'Work zone safety briefing, tool inspection & area setup',
+    `Execute primary activity: ${cleanAction}`,
+    'Dimensional verification & engineering tolerance check',
+    'Daily field log recording & supervisor progress sign-off'
+  ];
 }

@@ -21,7 +21,8 @@ import {
   Mic,
   Calendar,
   Layers,
-  ListTodo
+  ListTodo,
+  ListChecks
 } from 'lucide-react';
 import { formatTaskForDisplay } from '../../utils/taskFormatter';
 
@@ -164,7 +165,7 @@ export function WorkerDashboard() {
             <div className="flex items-center space-x-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
               <h3 className="text-base font-extrabold text-slate-900 tracking-tight">
-                Today's Daily Tasks (Line Se / Sequential Execution)
+                Today's Daily Tasks
               </h3>
               <span className="text-xs font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
                 {todayTasks.length} Tasks
@@ -274,6 +275,32 @@ export function WorkerDashboard() {
                         <p className="text-xs text-slate-500 line-clamp-1">
                           {formatted.fullSummary}
                         </p>
+                      )}
+
+                      {/* Sequential Subtasks in the same box */}
+                      {formatted.subtasks && formatted.subtasks.length > 0 && (
+                        <div className="mt-2.5 pt-2.5 border-t border-slate-100 space-y-1.5">
+                          <div className="flex items-center space-x-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            <ListChecks className="w-3.5 h-3.5 text-blue-600" />
+                            <span>Sequential Subtasks to Complete Today:</span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                            {formatted.subtasks.map((subtask, sIdx) => (
+                              <div
+                                key={sIdx}
+                                className="flex items-start space-x-2 px-2.5 py-1.5 bg-slate-50/90 rounded-lg border border-slate-200/70 hover:bg-blue-50/30 hover:border-blue-200 transition-colors"
+                              >
+                                <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-700 font-extrabold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  {sIdx + 1}
+                                </span>
+                                <span className="text-xs font-semibold text-slate-700 leading-snug">
+                                  {subtask}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
