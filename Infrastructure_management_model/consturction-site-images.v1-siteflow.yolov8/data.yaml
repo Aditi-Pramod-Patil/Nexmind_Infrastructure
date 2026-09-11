@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 18
+names: ['Beam', 'Ceiling', 'Column', 'Wall', 'beam-concrete', 'beam-formwork', 'beam-rebar', 'columns-concrete', 'columns-formwork', 'columns-rebar', 'concrete', 'formwork', 'frame', 'rebar', 'tiles', 'wall-concrete', 'wall-formwork', 'wall-rebar']
+
+roboflow:
+  workspace: aditi-patil-8ubn1
+  project: consturction-site-images-oinnf
+  version: 1
+  license: Public Domain
+  url: https://universe.roboflow.com/aditi-patil-8ubn1/consturction-site-images-oinnf/dataset/1

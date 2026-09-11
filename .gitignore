@@ -1,0 +1,111 @@
+# ==============================================================================
+# Git Ignore for Infrastructure Project Management (SiteFlow AI / InfraSync)
+# ==============================================================================
+
+# Node & Frontend dependencies and build outputs
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+build/
+.vite/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python & Backend bytecode, caches, and environments
+__pycache__/
+*/__pycache__/
+*/*/__pycache__/
+*/*/*/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Local databases and SQLite files
+*.sqlite3
+*.db
+backend/*.db
+database/*.sqlite3
+
+# Environment variables & secrets (keep .env.example intact)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env
+*.env
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+# Testing and code coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+
+# ML Models, large weights, datasets, images and training runs
+runs/
+Infrastructure_management_model/runs/
+weights/
+Infrastructure_management_model/weights/
+*.pt
+*.onnx
+*.engine
+*.tflite
+*.weights
+*.cache
+labels.cache
+*/labels.cache
+*/*/*/labels.cache
+
+# Dataset image and label splits (downloadable via Roboflow universe URL in data.yaml)
+**/train/images/
+**/train/labels/
+**/valid/images/
+**/valid/labels/
+**/test/images/
+**/test/labels/
+Infrastructure_management_model/**/*.jpg
+Infrastructure_management_model/**/*.jpeg
+Infrastructure_management_model/**/*.png
+
+# Temporary & Scratch folders
+scratch/
+tmp/
+temp/
+*.tmp
+
+# Operating System & IDE files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*~
