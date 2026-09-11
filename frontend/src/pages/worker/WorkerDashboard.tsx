@@ -21,9 +21,6 @@ import {
   Mic,
   Calendar,
   Layers,
-  Edit3,
-  Play,
-  X,
   ListTodo
 } from 'lucide-react';
 import { formatTaskForDisplay } from '../../utils/taskFormatter';
@@ -41,13 +38,6 @@ export function WorkerDashboard() {
   const [todayTasks, setTodayTasks] = useState<any[]>([]);
   const [tasksLoading, setTasksLoading] = useState(false);
 
-  // Task Update Modal State
-  const [updateModalOpen, setUpdateModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<any | null>(null);
-  const [taskStatus, setTaskStatus] = useState('IN_PROGRESS');
-  const [taskProgress, setTaskProgress] = useState(0);
-  const [updateNotes, setUpdateNotes] = useState('');
-  const [updating, setUpdating] = useState(false);
 
   const loadTodayTasks = async (projId: string) => {
     if (!projId) return;
@@ -88,50 +78,6 @@ export function WorkerDashboard() {
     setSelectedProjectId(projId);
     localStorage.setItem('siteflow_active_project_id', projId);
     loadTodayTasks(projId);
-  };
-
-  const handleQuickStartWork = async (task: any) => {
-    try {
-      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-      await api.updateTaskProgress(task.id, {
-        status: 'IN_PROGRESS',
-        progress: Math.max(task.progress || 0, 10),
-        actual_start: nowTime,
-        notes: `Started work at ${nowTime}`
-      });
-      loadTodayTasks(selectedProjectId);
-      loadWorkerProjects();
-    } catch (err: any) {
-      alert(err.message || 'Failed to start work.');
-    }
-  };
-
-  const handleOpenUpdateModal = (task: any) => {
-    setSelectedTask(task);
-    setTaskStatus(task.status || 'IN_PROGRESS');
-    setTaskProgress(Number(task.progress || 0));
-    setUpdateNotes(task.review_notes || '');
-    setUpdateModalOpen(true);
-  };
-
-  const handleTaskUpdateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTask) return;
-    setUpdating(true);
-    try {
-      await api.updateTaskProgress(selectedTask.id, {
-        status: taskStatus,
-        progress: Number(taskProgress),
-        notes: updateNotes
-      });
-      setUpdateModalOpen(false);
-      loadTodayTasks(selectedProjectId);
-      loadWorkerProjects();
-    } catch (err: any) {
-      alert(err.message || 'Failed to update task.');
-    } finally {
-      setUpdating(false);
-    }
   };
 
   const workerName = user?.name || 'Worker';
@@ -276,108 +222,59 @@ export function WorkerDashboard() {
                       : 'border-slate-200'
                   }`}
                 >
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="flex items-start space-x-3.5">
                     {/* Left: Sequence Number & Task Info */}
-                    <div className="flex items-start space-x-3.5 flex-1 min-w-0">
-                      <div
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center font-extrabold text-xs flex-shrink-0 shadow-2xs ${
-                          isCompleted
-                            ? 'bg-emerald-600 text-white'
-                            : t.status === 'IN_PROGRESS'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-slate-100 text-slate-700 border border-slate-200'
-                        }`}
-                      >
-                        #{index + 1}
-                      </div>
-
-                      <div className="space-y-1.5 min-w-0 flex-1">
-                        <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                            <Layers className="w-3 h-3 mr-1" />
-                            {formatted.cleanPackageName}
-                          </span>
-
-                          {t.planned_date && (
-                            <span className="inline-flex items-center text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                              <Calendar className="w-3 h-3 mr-1 text-slate-400" />
-                              {t.planned_date}
-                            </span>
-                          )}
-
-                          <Badge
-                            variant={
-                              isCompleted
-                                ? 'success'
-                                : t.status === 'IN_PROGRESS'
-                                ? 'warning'
-                                : t.status === 'DELAYED' || t.status === 'BLOCKED'
-                                ? 'danger'
-                                : 'neutral'
-                            }
-                            size="sm"
-                          >
-                            {isNotStarted ? 'NOT STARTED' : t.status.replace('_', ' ')}
-                          </Badge>
-                        </div>
-
-                        <h4 className="text-sm font-extrabold text-slate-900 leading-snug">
-                          {formatted.displayTitle}
-                        </h4>
-
-                        {formatted.fullSummary && (
-                          <p className="text-xs text-slate-500 line-clamp-1">
-                            {formatted.fullSummary}
-                          </p>
-                        )}
-                      </div>
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-extrabold text-xs flex-shrink-0 shadow-2xs ${
+                        isCompleted
+                          ? 'bg-emerald-600 text-white'
+                          : t.status === 'IN_PROGRESS'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-100 text-slate-700 border border-slate-200'
+                      }`}
+                    >
+                      #{index + 1}
                     </div>
 
-                    {/* Middle: Progress Bar */}
-                    <div className="w-full lg:w-44 space-y-1 flex-shrink-0">
-                      <div className="flex justify-between text-xs font-bold text-slate-700">
-                        <span>Progress</span>
-                        <span className={actualProgress >= 100 ? 'text-emerald-600' : 'text-blue-600'}>
-                          {actualProgress}%
+                    <div className="space-y-1.5 min-w-0 flex-1">
+                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                          <Layers className="w-3 h-3 mr-1" />
+                          {formatted.cleanPackageName}
                         </span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
-                        <div
-                          className={`h-full rounded-full transition-all duration-300 ${
-                            isCompleted ? 'bg-emerald-500' : 'bg-blue-600'
-                          }`}
-                          style={{ width: `${Math.min(100, Math.max(0, actualProgress))}%` }}
-                        />
-                      </div>
-                    </div>
 
-                    {/* Right: Quick Action Buttons */}
-                    <div className="flex items-center space-x-2 flex-shrink-0">
-                      {isNotStarted && (
-                        <Button
-                          variant="secondary"
+                        {t.planned_date && (
+                          <span className="inline-flex items-center text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                            <Calendar className="w-3 h-3 mr-1 text-slate-400" />
+                            {t.planned_date}
+                          </span>
+                        )}
+
+                        <Badge
+                          variant={
+                            isCompleted
+                              ? 'success'
+                              : t.status === 'IN_PROGRESS'
+                              ? 'warning'
+                              : t.status === 'DELAYED' || t.status === 'BLOCKED'
+                              ? 'danger'
+                              : 'neutral'
+                          }
                           size="sm"
-                          icon={Play}
-                          onClick={() => handleQuickStartWork(t)}
                         >
-                          Start
-                        </Button>
+                          {isNotStarted ? 'NOT STARTED' : t.status.replace('_', ' ')}
+                        </Badge>
+                      </div>
+
+                      <h4 className="text-sm font-extrabold text-slate-900 leading-snug">
+                        {formatted.displayTitle}
+                      </h4>
+
+                      {formatted.fullSummary && (
+                        <p className="text-xs text-slate-500 line-clamp-1">
+                          {formatted.fullSummary}
+                        </p>
                       )}
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        icon={Edit3}
-                        onClick={() => handleOpenUpdateModal(t)}
-                      >
-                        Update
-                      </Button>
-                      <button
-                        onClick={() => navigate(`/worker/projects/${selectedProjectId}`)}
-                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="View in Project Detail"
-                      >
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
                 </Card>
@@ -463,88 +360,6 @@ export function WorkerDashboard() {
         )}
       </div>
 
-      {/* Update Progress Modal */}
-      {updateModalOpen && selectedTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs font-sans">
-          <div className="bg-white w-full max-w-lg rounded-2xl border border-slate-200 shadow-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-extrabold text-slate-900">Update Task Progress</h3>
-                <p className="text-xs text-slate-500 truncate max-w-xs">{selectedTask.task_name}</p>
-              </div>
-              <button
-                onClick={() => setUpdateModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleTaskUpdateSubmit} className="p-6 space-y-4 text-xs">
-              <div>
-                <label className="block text-slate-700 font-bold mb-1">Execution Status</label>
-                <select
-                  value={taskStatus}
-                  onChange={(e) => setTaskStatus(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none"
-                >
-                  <option value="NOT_STARTED">Not Started</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="COMPLETED">Completed</option>
-                  <option value="DELAYED">Delayed</option>
-                  <option value="BLOCKED">Blocked</option>
-                </select>
-              </div>
-
-              <div>
-                <div className="flex justify-between font-bold mb-1">
-                  <span className="text-slate-700">Progress Percentage</span>
-                  <span className="text-blue-600 font-extrabold">{taskProgress}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  value={taskProgress}
-                  onChange={(e) => setTaskProgress(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 font-bold mb-1">Field Remarks / Daily Notes</label>
-                <textarea
-                  rows={3}
-                  value={updateNotes}
-                  onChange={(e) => setUpdateNotes(e.target.value)}
-                  placeholder="e.g. Rebar installation completed for Pier P2. Shuttering aligned for pour."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium resize-none"
-                />
-              </div>
-
-              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setUpdateModalOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  isLoading={updating}
-                >
-                  Save Progress
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Join Project Modal */}
       <JoinProjectModal
