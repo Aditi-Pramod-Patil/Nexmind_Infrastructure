@@ -1,6 +1,10 @@
 import { MOCK_PROJECTS } from '../data/mockData';
 
 const getApiBaseUrl = (): string => {
+  // Production environment variable configured on Vercel
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return (import.meta.env.VITE_API_BASE_URL as string).replace(/\/$/, '');
+  }
   if (typeof window !== 'undefined' && window.location) {
     const hostname = window.location.hostname || 'localhost';
     const protocol = window.location.protocol || 'http:';
