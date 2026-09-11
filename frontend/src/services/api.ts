@@ -609,7 +609,13 @@ export async function fetchAPI<T = any>(endpoint: string, options: RequestInit =
   } catch (err: any) {
     const method = (options.method || 'GET').toUpperCase();
     // Only treat genuine network/connection failures as offline (not backend 4xx/5xx errors)
-    const isNetworkError = err.name === 'TypeError' || err.message === 'Failed to fetch' || err.message?.includes('NetworkError');
+    const isNetworkError = (
+      err.name === 'TypeError' ||
+      err.message === 'Failed to fetch' ||
+      err.message?.includes('NetworkError') ||
+      err.message?.includes('No API key found in request') ||
+      err.message?.includes('API Request Failed')
+    );
     
     // For POST /site-images: never fall back to static mock on backend errors —
     // doing so would discard the real AI analysis result from the server.
