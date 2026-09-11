@@ -123,6 +123,7 @@ export function formatTaskForDisplay(task: {
   const subtasks = extractSequentialSubtasks({
     task_name: rawTaskName,
     l6_name: rawL6,
+    l5_name: rawL5,
     stageBadge,
     scopeItems
   });
@@ -150,106 +151,183 @@ export function extractSequentialSubtasks(task: {
     return task.scopeItems;
   }
 
-  const raw = `${task.task_name || ''} ${task.l6_name || ''} ${task.stageBadge || ''}`.toLowerCase();
+  const raw = `${task.task_name || ''} ${task.l6_name || ''} ${task.l5_name || ''} ${task.stageBadge || ''}`.toLowerCase();
 
-  // Domain-specific step breakdown
-  if (raw.includes('verification') || raw.includes('safety inspection') || raw.includes('inspection')) {
-    return [
-      'Site safety briefing & PPE compliance verification',
-      'Structural alignment & physical tolerance check',
-      'Conduit, fittings & MEP interface inspection',
-      'Daily site execution log & supervisor sign-off'
-    ];
-  }
-
+  // 1. Civil: Boring & Piling
   if (raw.includes('boring') || raw.includes('pile') || raw.includes('drilling')) {
     return [
-      'Position hydraulic piling rig & verify center alignment',
-      'Soil boring & excavation to target design depth',
-      'Bentonite slurry circulation & borehole cleaning',
-      'Depth caliper check & reinforcement cage placement'
+      'Piling rig center alignment & hydraulic mast stabilization',
+      'Continuous auger boring & soil excavation to design depth',
+      'Bentonite slurry circulation & borehole bottom desanding',
+      'Reinforcement cage lowering & tremie pipe concrete pumping'
     ];
   }
 
-  if (raw.includes('rebar') || raw.includes('reinforcement') || raw.includes('binding')) {
+  // 2. Civil: Rebar / Reinforcement
+  if (raw.includes('rebar') || raw.includes('reinforcement') || raw.includes('binding') || raw.includes('steel cage')) {
     return [
-      'Cut, bend and transport rebar bundles to work zone',
-      'Grid layout marking & primary rebar positioning',
-      'Tie-wire binding of vertical bars & horizontal stirrups',
-      'Concrete spacer block fixing & cover clearance check'
+      'Rebar cutting, bending & transport to structural grid bay',
+      'Main longitudinal bar spacing, leveling & vertical lap tying',
+      'Lateral tie-wire binding of stirrups & column ring links',
+      'Concrete cover spacer block fixing & clearance verification'
     ];
   }
 
-  if (raw.includes('shuttering') || raw.includes('formwork')) {
+  // 3. Civil: Shuttering & Formwork
+  if (raw.includes('shuttering') || raw.includes('formwork') || raw.includes('props')) {
     return [
-      'Clean shuttering panels & apply formwork release agent',
-      'Erect formwork panels & secure external tie-rods',
-      'Laser plumb-line alignment & lateral prop bracing',
-      'Joint sealing check to prevent cement slurry leakage'
+      'Clean shuttering panels & apply mold release agent',
+      'Erect formwork panels, tie-rods & PVC spacer sleeves',
+      'Laser plumb-line alignment & lateral prop turnbuckle bracing',
+      'Foam tape joint sealing to prevent cement slurry leakage'
     ];
   }
 
-  if (raw.includes('concrete') || raw.includes('pour') || raw.includes('casting')) {
+  // 4. Civil: Concrete Pouring & Casting
+  if (raw.includes('concrete') || raw.includes('pour') || raw.includes('casting') || raw.includes('slab')) {
     return [
-      'Pre-pour checklist: Rebar, formwork & cleanliness sign-off',
-      'Concrete batch transit mixer inspection & slump test',
-      'Controlled concrete pour with continuous needle vibration',
-      'Top surface screeding, leveling & initial wet curing setup'
+      'Formwork pre-pour washdown & rebar clearance verification',
+      'Batch transit mixer slump test & pump hose positioning',
+      'Controlled concrete pour with continuous needle immersion vibration',
+      'Surface screeding, power-trowel leveling & burlap wet curing'
     ];
   }
 
-  if (raw.includes('pipe') || raw.includes('spool') || raw.includes('header')) {
+  // 5. Civil: Masonry, Brickwork & Blockwork
+  if (raw.includes('masonry') || raw.includes('brick') || raw.includes('block') || raw.includes('mortar')) {
     return [
-      'Rigging and crane hoisting of spool pipe segments',
-      'Flange alignment, bevel cleaning & tack welding',
-      'Full root & cap pass welding of pipe joint',
-      'Non-destructive testing (NDT) & joint inspection'
+      'Mortar mixing, bed preparation & corner lead plumb setup',
+      'Staggered brick/block course laying with spirit level alignment',
+      'Joint raking, wall tie insertion & lintel support placement',
+      'Mortar joint pointing, clean wipe down & water curing'
     ];
   }
 
-  if (raw.includes('cable') || raw.includes('electrical') || raw.includes('wiring')) {
+  // 6. Civil: Plastering & Rendering
+  if (raw.includes('plaster') || raw.includes('rendering') || raw.includes('putty')) {
     return [
-      'Perforated cable tray & conduit bracket installation',
-      'Cable drum positioning, pulling & trunking containment',
-      'Core identification, stripping & gland termination',
-      'Insulation resistance megger test & circuit tagging'
+      'Wall surface hacking, wire brushing & water saturation',
+      'Leveling button (bull-mark) fixing & chicken mesh alignment',
+      'Base coat cement plaster application & straight-edge screeding',
+      'Sponge float finish, groove cutting & moist curing'
     ];
   }
 
-  if (raw.includes('hvac') || raw.includes('duct') || raw.includes('ventilation')) {
+  // 7. Structural: Steel Erection, Trusses, Columns & Beams
+  if (raw.includes('steel') || raw.includes('column') || raw.includes('truss') || raw.includes('beam') || raw.includes('girder') || raw.includes('framing')) {
     return [
-      'Duct hanger anchor drilling & threaded rod hanging',
-      'Sheet metal duct section lifting & gasket joint sealing',
-      'Damper & diffuser installation with acoustic insulation',
-      'Airflow static pressure testing & smoke damper check'
+      'Crane rigging, sling inspection & heavy steel member hoisting',
+      'Baseplate seating, leveling shims & anchor bolt alignment',
+      'Connecting beam positioning & HSFG bolt torque fastening',
+      'Diagonal cross-bracing installation & anti-corrosive touch-up'
     ];
   }
 
-  if (raw.includes('excavat') || raw.includes('earthwork') || raw.includes('clearing')) {
+  // 8. Earthworks: Excavation, Grading & Compaction
+  if (raw.includes('excavat') || raw.includes('earthwork') || raw.includes('clearing') || raw.includes('trench') || raw.includes('grading')) {
     return [
-      'Survey boundary pegging & underground utility marking',
-      'JCB/Excavator bulk trench digging & topsoil stripping',
-      'Grade leveling & laser level bed depth checking',
-      'Vibratory roller soil compaction & moisture density test'
+      'Survey boundary pegging & underground utility scanning',
+      'Excavator bulk trench digging & earth spoil removal',
+      'Trench bottom manual grading & laser bed depth checking',
+      'Vibratory plate compactor soil compaction & density test'
     ];
   }
 
-  if (raw.includes('server') || raw.includes('rack') || raw.includes('floor')) {
+  // 9. Infrastructure: Road, Paving & Asphalt
+  if (raw.includes('road') || raw.includes('paving') || raw.includes('asphalt') || raw.includes('highway') || raw.includes('subgrade')) {
     return [
-      'Laser leveling of floor pedestal grid & stringers',
-      'Anti-static floor panel laying & cable grommet cutouts',
-      'Server rack positioning, bolting & seismic anchoring',
-      'Earth bonding & protective grounding verification'
+      'Subgrade grading, laser level check & moisture conditioning',
+      'Granular sub-base (GSB) aggregate spreading & leveling',
+      'Heavy tandem vibratory roller compaction to target dry density',
+      'Bituminous tack coat spray & asphalt wearing course paving'
     ];
   }
 
-  // Fallback for general execution tasks
-  const title = task.stageBadge || task.task_name || 'Scheduled Activity';
-  const cleanAction = toTitleCase(title.split('—')[0].trim());
+  // 10. MEP: Cable, Electrical & Wiring
+  if (raw.includes('cable') || raw.includes('electrical') || raw.includes('wiring') || raw.includes('conduit') || raw.includes('tray')) {
+    return [
+      'Support trapeze hanger drilling & perforated cable tray bolting',
+      'PVC/GI conduit routing, pull-box mounting & wire pulling',
+      'Core identification, stripping, glanding & lug crimping',
+      'Megger insulation resistance testing & circuit tagging'
+    ];
+  }
+
+  // 11. MEP: Switchgear, Panel, Transformer & Substation
+  if (raw.includes('transformer') || raw.includes('switchgear') || raw.includes('panel') || raw.includes('ups') || raw.includes('substation')) {
+    return [
+      'Equipment plinth channel alignment & anti-vibration pad seating',
+      'Panel suite positioning, mechanical coupling & base anchoring',
+      'Main busbar joint torquing & copper earth bonding',
+      'Control wiring termination, ferrule tagging & breaker test'
+    ];
+  }
+
+  // 12. MEP: Piping, Spool & Plumbing
+  if (raw.includes('pipe') || raw.includes('spool') || raw.includes('header') || raw.includes('plumbing') || raw.includes('drainage')) {
+    return [
+      'Pipe spool staging, bevel end cleaning & pipe stand support setup',
+      'Flange alignment, neoprene gasket fitting & tack welding',
+      'Full root & cap pass welding with joint cooling check',
+      'Hydrostatic pressure leak testing & thermal insulation wrap'
+    ];
+  }
+
+  // 13. MEP: HVAC, Chiller, Duct & Ventilation
+  if (raw.includes('hvac') || raw.includes('duct') || raw.includes('ventilation') || raw.includes('chiller') || raw.includes('cooling')) {
+    return [
+      'Threaded rod unistrut hanger anchoring to ceiling slab',
+      'Galvanized iron duct segment hoisting & flange gasket bolting',
+      'Fire damper, volume control damper & flexible connector fixing',
+      'Air duct static pressure testing & acoustic insulation wrapping'
+    ];
+  }
+
+  // 14. Fitout: Raised Floor, Server Rack & Modular Fitout
+  if (raw.includes('server') || raw.includes('rack') || raw.includes('floor') || raw.includes('pedestal')) {
+    return [
+      'Laser leveling of floor pedestal grid & epoxy subfloor bonding',
+      'Stringer interlocking & anti-static panel precision laying',
+      'Server rack suite positioning, anchoring & seismic bracing',
+      'Copper earth bonding strip connection & continuity check'
+    ];
+  }
+
+  // 15. Fitout: Drywall, Partition, Ceiling & Glazing
+  if (raw.includes('partition') || raw.includes('drywall') || raw.includes('ceiling') || raw.includes('glazing') || raw.includes('door')) {
+    return [
+      'Floor & ceiling track layout marking & screw anchoring',
+      'Vertical stud framing at 400/600mm centers with noggins',
+      'Acoustic insulation batt infill & gypsum board screw fixing',
+      'Joint tape embedding, skim coat plastering & sand smoothing'
+    ];
+  }
+
+  // 16. Finishes: Painting & Waterproofing
+  if (raw.includes('paint') || raw.includes('waterproof') || raw.includes('coating') || raw.includes('seal')) {
+    return [
+      'Surface cleaning, crack patch repair & primer coat application',
+      'Waterproofing membrane torch-on / liquid elastomeric barrier coating',
+      'Intermediate base coat roller application with uniform mil thickness',
+      'Final topcoat protective finish & surface uniformity inspection'
+    ];
+  }
+
+  // 17. Inspection / Quality Testing (Physical site engineering check)
+  if (raw.includes('verification') || raw.includes('testing') || raw.includes('qa') || raw.includes('survey')) {
+    return [
+      'Total station survey setup & benchmark coordinate check',
+      'Physical rebar spacing, concrete cover & plumb line measurement',
+      'Bolt torque tension calibration & weld joint dye-penetrant test',
+      'Field density / slump batch testing & site engineer sign-off'
+    ];
+  }
+
+  // 18. Universal Construction Work Fallback (Everyday physical site execution)
   return [
-    'Work zone safety briefing, tool inspection & area setup',
-    `Execute primary activity: ${cleanAction}`,
-    'Dimensional verification & engineering tolerance check',
-    'Daily field log recording & supervisor progress sign-off'
+    'Work zone survey layout, datum mark transfer & material staging',
+    'Component cutting, structural member positioning & initial fit-up',
+    'Mechanical fastening, structural tie bonding & joint alignment',
+    'Surface leveling, de-shuttering & protective curing application'
   ];
 }

@@ -22,7 +22,9 @@ import {
   Calendar,
   Layers,
   ListTodo,
-  ListChecks
+  ListChecks,
+  Check,
+  Loader2
 } from 'lucide-react';
 import { formatTaskForDisplay } from '../../utils/taskFormatter';
 
@@ -38,14 +40,92 @@ export function WorkerDashboard() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [todayTasks, setTodayTasks] = useState<any[]>([]);
   const [tasksLoading, setTasksLoading] = useState(false);
+  const [completedSubtasksMap, setCompletedSubtasksMap] = useState<Record<string, number[]>>({});
+  const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
 
+  const initCompletedSubtasks = (tasks: any[]) => {
+    const map: Record<string, number[]> = {};
+    tasks.forEach(t => {
+      const stored = localStorage.getItem(`worker_subtasks_${t.id}`);
+      if (stored) {
+        try {
+          map[t.id] = JSON.parse(stored);
+          return;
+        } catch (e) {
+          // fallback to progress-based calculation
+        }
+      }
+      const formatted = formatTaskForDisplay(t);
+      const totalSubs = formatted.subtasks.length || 4;
+      const prog = Number(t.progress || 0);
+      if (t.status === 'COMPLETED' || prog >= 100) {
+        map[t.id] = Array.from({ length: totalSubs }, (_, i) => i);
+      } else if (prog > 0) {
+        const count = Math.min(totalSubs, Math.max(1, Math.round((prog / 100) * totalSubs)));
+        map[t.id] = Array.from({ length: count }, (_, i) => i);
+      } else {
+        map[t.id] = [];
+      }
+    });
+    setCompletedSubtasksMap(map);
+  };
+
+  const handleToggleSubtask = async (task: any, subtaskIndex: number, subtasks: string[]) => {
+    const currentCompleted = completedSubtasksMap[task.id] || [];
+    let nextCompleted: number[];
+    if (currentCompleted.includes(subtaskIndex)) {
+      nextCompleted = currentCompleted.filter(i => i !== subtaskIndex);
+    } else {
+      nextCompleted = [...currentCompleted, subtaskIndex].sort((a, b) => a - b);
+    }
+
+    const total = subtasks.length || 4;
+    const completedCount = nextCompleted.length;
+    const newProgress = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+    const newStatus = newProgress >= 100 ? 'COMPLETED' : (newProgress > 0 ? 'IN_PROGRESS' : 'NOT_STARTED');
+
+    // 1. Instant local state updates
+    setCompletedSubtasksMap(prev => ({
+      ...prev,
+      [task.id]: nextCompleted
+    }));
+    try {
+      localStorage.setItem(`worker_subtasks_${task.id}`, JSON.stringify(nextCompleted));
+    } catch (e) {
+      // ignore
+    }
+
+    setTodayTasks(prev =>
+      prev.map(item =>
+        item.id === task.id
+          ? { ...item, progress: newProgress, status: newStatus }
+          : item
+      )
+    );
+
+    // 2. Sync progress to backend
+    setUpdatingTaskId(task.id);
+    try {
+      await api.updateTaskProgress(task.id, {
+        progress: newProgress,
+        status: newStatus,
+        notes: `Subtasks: ${completedCount}/${total} completed (${newProgress}%)`
+      });
+    } catch (err) {
+      console.error('Failed to sync subtask progress to server:', err);
+    } finally {
+      setUpdatingTaskId(null);
+    }
+  };
 
   const loadTodayTasks = async (projId: string) => {
     if (!projId) return;
     setTasksLoading(true);
     try {
       const tasks = await api.getTodayTasks(projId);
-      setTodayTasks(tasks || []);
+      const list = tasks || [];
+      setTodayTasks(list);
+      initCompletedSubtasks(list);
     } catch (err) {
       console.error(err);
     } finally {
@@ -277,31 +357,113 @@ export function WorkerDashboard() {
                         </p>
                       )}
 
-                      {/* Sequential Subtasks in the same box */}
-                      {formatted.subtasks && formatted.subtasks.length > 0 && (
-                        <div className="mt-2.5 pt-2.5 border-t border-slate-100 space-y-1.5">
-                          <div className="flex items-center space-x-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            <ListChecks className="w-3.5 h-3.5 text-blue-600" />
-                            <span>Sequential Subtasks to Complete Today:</span>
-                          </div>
+                      {/* Interactive Sequential Construction Subtasks */}
+                      {formatted.subtasks && formatted.subtasks.length > 0 && (() => {
+                        const totalSubs = formatted.subtasks.length;
+                        const taskCompletedIndices = completedSubtasksMap[t.id] || [];
+                        const completedCount = taskCompletedIndices.length;
+                        const currentProgress = Number(t.progress || 0);
+                        const isAllDone = isCompleted || completedCount === totalSubs;
+                        const isUpdating = updatingTaskId === t.id;
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                            {formatted.subtasks.map((subtask, sIdx) => (
-                              <div
-                                key={sIdx}
-                                className="flex items-start space-x-2 px-2.5 py-1.5 bg-slate-50/90 rounded-lg border border-slate-200/70 hover:bg-blue-50/30 hover:border-blue-200 transition-colors"
-                              >
-                                <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-700 font-extrabold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">
-                                  {sIdx + 1}
-                                </span>
-                                <span className="text-xs font-semibold text-slate-700 leading-snug">
-                                  {subtask}
+                        return (
+                          <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
+                            <div className="flex items-center justify-between text-xs flex-wrap gap-1.5">
+                              <div className="flex items-center space-x-1.5 font-bold text-slate-700 tracking-tight">
+                                <ListChecks className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+                                <span className="text-[11px] uppercase tracking-wider font-extrabold text-slate-600">
+                                  Sequential Construction Subtasks
                                 </span>
                               </div>
-                            ))}
+
+                              <div className="flex items-center space-x-2">
+                                {isUpdating && (
+                                  <span className="inline-flex items-center text-[10px] text-blue-600 font-bold animate-pulse">
+                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                    Saving...
+                                  </span>
+                                )}
+                                <span
+                                  className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border transition-colors ${
+                                    isAllDone
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      : completedCount > 0
+                                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                      : 'bg-slate-50 text-slate-600 border-slate-200'
+                                  }`}
+                                >
+                                  {completedCount}/{totalSubs} Completed • {currentProgress}%
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Slim Dynamic Progress Bar */}
+                            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full transition-all duration-300 rounded-full ${
+                                  isAllDone ? 'bg-emerald-500' : 'bg-blue-600'
+                                }`}
+                                style={{ width: `${currentProgress}%` }}
+                              />
+                            </div>
+
+                            {/* Interactive Subtask Cards */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
+                              {formatted.subtasks.map((subtask, sIdx) => {
+                                const isSubtaskDone = taskCompletedIndices.includes(sIdx);
+                                return (
+                                  <button
+                                    type="button"
+                                    key={sIdx}
+                                    onClick={() => handleToggleSubtask(t, sIdx, formatted.subtasks)}
+                                    className={`w-full text-left flex items-start space-x-2.5 p-2.5 rounded-xl border transition-all duration-150 cursor-pointer group select-none ${
+                                      isSubtaskDone
+                                        ? 'bg-emerald-50/80 border-emerald-300 shadow-2xs hover:bg-emerald-100/50'
+                                        : 'bg-slate-50/80 border-slate-200/90 hover:bg-blue-50/40 hover:border-blue-300 shadow-2xs'
+                                    }`}
+                                  >
+                                    {/* Step / Checkbox Icon */}
+                                    <div
+                                      className={`w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+                                        isSubtaskDone
+                                          ? 'bg-emerald-600 text-white shadow-2xs'
+                                          : 'bg-white border border-slate-300 text-slate-600 group-hover:border-blue-400 group-hover:text-blue-600'
+                                      }`}
+                                    >
+                                      {isSubtaskDone ? (
+                                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                      ) : (
+                                        <span className="text-[10px] font-extrabold">{sIdx + 1}</span>
+                                      )}
+                                    </div>
+
+                                    <div className="min-w-0 flex-1">
+                                      <span
+                                        className={`text-xs block leading-snug transition-colors ${
+                                          isSubtaskDone
+                                            ? 'font-bold text-emerald-950 line-through decoration-emerald-500/60 decoration-1.5'
+                                            : 'font-semibold text-slate-800 group-hover:text-slate-900'
+                                        }`}
+                                      >
+                                        {subtask}
+                                      </span>
+                                      <span
+                                        className={`text-[10px] font-bold block mt-0.5 ${
+                                          isSubtaskDone
+                                            ? 'text-emerald-700'
+                                            : 'text-slate-400 group-hover:text-blue-600'
+                                        }`}
+                                      >
+                                        {isSubtaskDone ? 'Completed' : 'Tap to mark done'}
+                                      </span>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   </div>
                 </Card>
